@@ -7,37 +7,32 @@ import json
 import datetime
 from discord import utils
 
-# --- CONFIGURATION (UPDATE THESE LINES) ---
-# 1. Load environment variables from .env file
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')  # <-- MUST BE SET IN YOUR .env FILE
+TOKEN = os.getenv('DISCORD_TOKEN')
 
-# 2. REPLACE THESE URLs with your actual direct GIF/Image links
 CUSTOM_WELCOME_IMAGE = "https://cdn.discordapp.com/attachments/1066723795525709824/1435267993142820955/Welcome.gif?ex=690b58fb&is=690a077b&hm=35418717b0853f5da85297a568547fb6c14e3c23aa5932714e0032b4fcf19650&"
 CUSTOM_LEAVING_IMAGE = "https://cdn.discordapp.com/attachments/1066723795525709824/1435268136516456499/Leaving.gif?ex=690b591d&is=690a079d&hm=a8dda944fb39f3bd9417d2e33184f6452403a700d7909d00e322239e51ffdd91&"
 
-# 3. CHANNEL CONFIGURATION (CRUCIAL!)
-# Enable Developer Mode in Discord, right-click the channel, and select "Copy ID" for each of these:
-ANNOUNCEMENT_CHANNEL_ID = 1435279295776817292  # <-- For Birthday announcements (@everyone)
-JOIN_CHANNEL_ID = 1435245791265427590  # <-- REPLACE with your dedicated WELCOME channel ID!
-LEAVE_CHANNEL_ID = 1435489866598056017  # <-- REPLACE with your dedicated EXIT channel ID!
-# --------------------------------------------
+ANNOUNCEMENT_CHANNEL_ID = 1435279295776817292  
+JOIN_CHANNEL_ID = 1435245791265427590  
+LEAVE_CHANNEL_ID = 1435489866598056017 
 
-# --- Intents and Bot Setup ---
+
+
 intents = discord.Intents.default()
 intents.message_content = True
-intents.members = True  # Required for member/join/leave events and accurate stats
+intents.members = True  
 
 bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
-# --- Game & Aesthetic Constants ---
+
 CHAMBERS = 6
 GAME_ACTIVE = False
 BULLET_CHAMBER = 0
 CURRENT_CHAMBER_INDEX = 0
 GAME_COLOR = discord.Color.dark_red()
 
-# --- KanomTokyo's Dramatic Messages (Thai) ---
+
 JOIN_MESSAGES = [
     "สวัสดีครับคุณ {member.mention}, ไม่ได้เจอกันตั้งนาน",
     "โยโยโยว **{member.mention}** ถ้านายกำลังอ่านประโยคนี้อยู่ยินดีตอนรับเข้าดิสคอร์ด.",
@@ -53,7 +48,6 @@ LEAVE_MESSAGES = [
     "ฉันว่าเราหยุด ก่อนดีไหม?.",
 ]
 
-# --- Game Picker Constants ---
 GAME_LIST = [
     "League of Legends (LOL)",
     "Apex Legends",
@@ -65,7 +59,6 @@ GAME_LIST = [
     "The Russian Roulette (Use !startgame instead!)",
 ]
 
-# --- Leaderboard Setup ---
 SCORE_FILE = 'scores.json'
 
 
@@ -86,7 +79,6 @@ def save_scores(scores):
 
 PLAYER_WINS = load_scores()
 
-# --- Birthday Setup ---
 BIRTHDAY_FILE = 'birthdays.json'
 
 
@@ -107,9 +99,6 @@ def save_birthdays(birthdays):
 
 PLAYER_BDAYS = load_birthdays()
 
-
-# --- Helper Functions (No more flexible get_welcome_channel needed) ---
-
 def create_ambatron_embed(member, message_type="join"):
     title = ""
     description = ""
@@ -125,7 +114,7 @@ def create_ambatron_embed(member, message_type="join"):
         footer_text = f"ขอยินดีต้อนรับสู่ {member.guild.name}, ขอให้อยู่กันนานๆ!"
         image_url = CUSTOM_WELCOME_IMAGE
 
-    else:  # leave
+    else:  
         title = "AMLEAVING"
         color = discord.Color.red()
         description = random.choice(LEAVE_MESSAGES).format(member=member)
@@ -150,8 +139,6 @@ def create_ambatron_embed(member, message_type="join"):
 
     return embed
 
-
-# --- ONE-TIME BIRTHDAY CHECKER ---
 async def announce_today_birthday():
     """Checks for today's birthdays and announces them once on startup."""
 
@@ -181,12 +168,9 @@ async def announce_today_birthday():
         )
         embed.set_footer(text=f"วันนี้วันที่ {today_dm} ขอให้มีความสุขในวันเกิดนะ!")
 
-        # --- Uses @everyone for max visibility ---
         await channel.send(f"**@everyone Happy Birthday!** สุขสันต์วันเกิดสำหรับ: {mentions}", embed=embed)
         print(f"Announced birthday for: {mentions} with @everyone ping.")
 
-
-# --- Events ---
 
 @bot.event
 async def on_ready():
@@ -194,14 +178,12 @@ async def on_ready():
     print(f'KanomTokyo ({bot.user.name}) has connected to Discord!')
     await bot.change_presence(activity=discord.Game(name=f"!help"))
 
-    # Run the simple birthday check once upon startup
     await announce_today_birthday()
 
 
 @bot.event
 async def on_member_join(member):
     """KanomTokyo's grand welcome using a special Embed, directed to JOIN_CHANNEL_ID."""
-    # Find the specific channel ID for joins
     channel = member.guild.get_channel(JOIN_CHANNEL_ID)
     if channel and not member.bot:
         welcome_embed = create_ambatron_embed(member, message_type="join")
@@ -211,14 +193,11 @@ async def on_member_join(member):
 @bot.event
 async def on_member_remove(member):
     """KanomTokyo's dramatic farewell using a special Embed, directed to LEAVE_CHANNEL_ID."""
-    # Find the specific channel ID for leaves
     channel = member.guild.get_channel(LEAVE_CHANNEL_ID)
     if channel and not member.bot:
         farewell_embed = create_ambatron_embed(member, message_type="leave")
         await channel.send(embed=farewell_embed)
 
-
-# --- Commands: General ---
 
 @bot.command(name='help', help='แสดงรายการคำสั่งและกติกาเกมทั้งหมด.')
 async def help_command(ctx):
@@ -230,7 +209,6 @@ async def help_command(ctx):
     )
     embed.set_thumbnail(url=bot.user.avatar.url if bot.user.avatar else bot.user.default_avatar.url)
 
-    # Game Commands Section
     embed.add_field(
         name="🔫 คำสั่งเกม (Russian Roulette)",
         value="**กติกา:** เกมจะนับช่องกระสุนเรียงตามลำดับ (1 ถึง 6) และจะจบเซสชันเมื่อยิงโดนกระสุนหรือยิงครบ 6 นัด\n",
@@ -252,7 +230,6 @@ async def help_command(ctx):
         inline=True
     )
 
-    # Utility Commands Section
     embed.add_field(
         name="📊 คำสั่งข้อมูลและบันทึก (Utilities)",
         value="\u200b",
@@ -301,8 +278,6 @@ async def help_command(ctx):
     await ctx.send(embed=embed)
 
 
-# --- Commands: Server Status ---
-
 @bot.command(name='serverstatus', aliases=['serverinfo', 'guildinfo'], help='แสดงข้อมูลโดยละเอียดเกี่ยวกับเซิร์ฟเวอร์.')
 async def server_status(ctx):
     """Displays detailed information about the current Discord server (guild)."""
@@ -310,17 +285,13 @@ async def server_status(ctx):
     guild = ctx.guild
     now = datetime.datetime.now(datetime.timezone.utc)
 
-    # Calculate Server Age
     age = now - guild.created_at
     days_old = age.days
 
-    # Get Member Counts
     member_count = guild.member_count
-    # Requires members intent and cache to be accurate
     online_members = sum(1 for member in guild.members if member.status != discord.Status.offline and not member.bot)
     bot_count = sum(1 for member in guild.members if member.bot)
 
-    # Get Text/Voice Channel Counts
     text_channels = len(guild.text_channels)
     voice_channels = len(guild.voice_channels)
 
@@ -332,33 +303,28 @@ async def server_status(ctx):
     if guild.icon:
         embed.set_thumbnail(url=guild.icon.url)
 
-    # General Info
     embed.add_field(name="เจ้าของเซิร์ฟเวอร์", value=guild.owner.mention, inline=True)
     embed.add_field(name="ID เซิร์ฟเวอร์", value=f"`{guild.id}`", inline=True)
     embed.add_field(name="ภูมิภาคหลัก", value=str(guild.preferred_locale).upper(), inline=True)
 
-    # Creation Info
     embed.add_field(
         name="สร้างเมื่อ",
         value=f"{discord.utils.format_dt(guild.created_at, style='f')}\n($\approx$ {days_old} วันที่ผ่านมา)",
         inline=False
     )
 
-    # Member Info
     embed.add_field(
         name="จำนวนสมาชิกทั้งหมด",
         value=f"**{member_count}** สมาชิก\n({online_members} ออนไลน์, {bot_count} บอท)",
         inline=True
     )
 
-    # Channel Info
     embed.add_field(
         name="จำนวนช่อง",
         value=f"Text: {text_channels}\nVoice: {voice_channels}",
         inline=True
     )
 
-    # Features
     features = ", ".join(f"`{feat.replace('_', ' ').title()}`" for feat in guild.features[:3])
     if features:
         embed.add_field(
@@ -374,8 +340,6 @@ async def server_status(ctx):
     await ctx.send(embed=embed)
 
 
-# --- Commands: Birthday Tracker ---
-
 @bot.command(name='setbday', help='ให้บอทบันทึกวันเกิดของคุณเพื่อฉลอง (รูปแบบ: DD/MM).')
 async def set_birthday(ctx, bday_str: str):
     """Allows a user to set their birthday (DD/MM format)."""
@@ -385,7 +349,6 @@ async def set_birthday(ctx, bday_str: str):
 
     try:
         day, month = map(int, bday_str.split('/'))
-        # Simple validation to ensure the date is valid (using year 2000 as a placeholder)
         datetime.date(year=2000, month=month, day=day)
 
         PLAYER_BDAYS[user_id] = f"{day:02d}/{month:02d}"
@@ -425,7 +388,6 @@ async def next_birthday(ctx):
         try:
             day, month = map(int, bday_str.split('/'))
 
-            # Determine the correct year (current year or next year)
             if (month, day) < (now.month, now.day):
                 year = now.year + 1
             else:
@@ -455,7 +417,6 @@ async def next_birthday(ctx):
         elif min_days_to_bday == 1:
             days_message = "**ในวันพรุ่งนี้!** 🎈"
         else:
-            # We add 1 back because time_until.days calculates difference, not count
             days_message = f"ในอีก **{min_days_to_bday + 1}** วัน"
 
         embed = discord.Embed(
@@ -473,8 +434,6 @@ async def next_birthday(ctx):
         await ctx.send(
             "🎂 **กง-เต็ก:** มีข้อมูลวันเกิดที่ไม่ถูกต้องอยู่ หรือยังไม่มีใครบันทึกเลย! โปรดตรวจสอบให้แน่ใจว่าทุกคนใช้รูปแบบ DD/MM.")
 
-
-# --- Commands: Random Game Picker ---
 
 @bot.command(name='gamepick', aliases=['whattoplay', 'randomgame'], help='KanomTokyo เลือกเกมแบบสุ่มให้คุณเล่น.')
 async def game_picker(ctx):
@@ -557,7 +516,6 @@ async def russian_roulette(ctx):
         return
 
     if CURRENT_CHAMBER_INDEX == BULLET_CHAMBER:
-        # --- HIT (The Bullet Fired) ---
         response = (
             f"💥 **แคว๊ก!!** **หมายเลข {CURRENT_CHAMBER_INDEX}** คือกระสุน! 😈"
             f"\n{ctx.author.mention}, **กง-เต็ก:** น่าเสียดายนะครับแต่ **เซสชันจบลงแล้ว** ใช้ `!startgame` เพื่อเริ่มต้นใหม่."
@@ -567,7 +525,6 @@ async def russian_roulette(ctx):
         CURRENT_CHAMBER_INDEX = 1
 
     else:
-        # --- MISS (The Chamber Was Empty - Player Survives This Pull) ---
         user_id = str(ctx.author.id)
         PLAYER_WINS[user_id] = PLAYER_WINS.get(user_id, 0) + 1
         save_scores(PLAYER_WINS)
@@ -671,8 +628,8 @@ async def show_leaderboard(ctx):
     await ctx.send(embed=embed)
 
 
-# Run the bot with the token
 if TOKEN:
     bot.run(TOKEN)
 else:
+
     print("Error: DISCORD_TOKEN not found. Check your .env file or environment variables.")
